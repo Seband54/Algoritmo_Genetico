@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Camino más corto - AG</title>
+  <style>
+
+    body {
+        font-family: 'Segoe UI', sans-serif;
+        background-color: #f4f4f4;
+        margin: 20px;
+        color: #333;
+    }
+
+    h2 {
+        color: #222;
+    }
+
+    label {
+        font-weight: bold;
+        margin-right: 5px;
+    }
+
+    select, button {
+        margin: 5px 10px 10px 0;
+        padding: 5px 10px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+        font-size: 14px;
+    }
+
+    button {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background-color: #45a049;
+    }
+
+    pre {
+        background: #fff;
+        padding: 10px;
+        border: 1px solid #ccc;
+        white-space: pre-wrap;
+        max-width: 500px;
+        overflow: auto;
+        border-radius: 4px;
+    }
+
+    svg {
+        background-color: white;
+        border: 1px solid #ccc;
+        margin-top: 20px;
+        display: block;
+    }
+
+    svg circle {
+        fill: #eee;
+        stroke: #333;
+        stroke-width: 2;
+        transition: fill 0.3s ease;
+    }
+
+    svg text {
+        font-size: 16px;
+        font-weight: bold;
+        text-anchor: middle;
+        dominant-baseline: middle;
+        pointer-events: none;
+    }
+
+    .start { fill: #9be7a3; }    
+    .end { fill: #f7a8a8; }      
+    .blocked { fill: #999; }
+
+    .path-line {
+        stroke: orange;
+        stroke-width: 4;
+        stroke-linecap: round;
+    }
+
+    .connection-line {
+        stroke: #aaa;
+        stroke-width: 2;
+    }
+
+    input[type="checkbox"] {
+        margin-right: 5px;
+    }
+
+    input[type="checkbox"]:disabled + label,
+    input[type="checkbox"]:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    }
+
+  </style>
+</head>
+<body>
+  <h2>Camino más corto (AG)</h2>
+
+  <label>Inicio:</label>
+  <select id="start">
+    {% for node in nodes %}
+    <option value="{{node}}">{{node}}</option>
+    {% endfor %}
+  </select>
+
+  <label>Fin:</label>
+  <select id="end">
+    {% for node in nodes %}
+    <option value="{{node}}">{{node}}</option>
+    {% endfor %}
+  </select>
+
+  <h3>Bloqueos:</h3>
+  {% for node in nodes %}
+  <label><input type="checkbox" value="{{node}}" id="chk_{{node}}"> {{node}}</label><br>
+  {% endfor %}
+
+  <br><button onclick="encontrarRuta()">Buscar ruta</button>
+  <pre id="resultado"></pre>
+
+  <svg width="400" height="350" id="mapa">
+    <!-- Líneas de conexión (fijas) -->
+    <line x1="200" y1="50" x2="100" y2="100" class="connection-line"/>
+    <line x1="200" y1="50" x2="300" y2="100" class="connection-line"/>
+    <line x1="100" y1="100" x2="150" y2="180" class="connection-line"/>
+    <line x1="300" y1="100" x2="150" y2="180" class="connection-line"/>
+    <line x1="300" y1="100" x2="250" y2="180" class="connection-line"/>
+    <line x1="150" y1="180" x2="250" y2="180" class="connection-line"/>
+    <line x1="100" y1="100" x2="50" y2="250" class="connection-line"/> 
+    <line x1="50" y1="250" x2="250" y2="250" class="connection-line"/> 
+    <line x1="250" y1="180" x2="250" y2="250" class="connection-line"/> 
+    <line x1="250" y1="250" x2="350" y2="300" class="connection-line"/> 
+    <line x1="150" y1="180" x2="50" y2="250" class="connection-line"/>
+    <line x1="300" y1="100" x2="350" y2="300" class="connection-line"/>
+
+    <!-- Nodos -->
+    <circle id="A" cx="200" cy="50" r="20" />
+    <text x="200" y="50">A</text>
+
+    <circle id="B" cx="100" cy="100" r="20" />
+    <text x="100" y="100">B</text>
+
+    <circle id="C" cx="300" cy="100" r="20" />
+    <text x="300" y="100">C</text>
+
+    <circle id="D" cx="150" cy="180" r="20" />
+    <text x="150" y="180">D</text>
+
+    <circle id="E" cx="250" cy="180" r="20" />
+    <text x="250" y="180">E</text>
+
+    <circle id="F" cx="50" cy="250" r="20" />
+    <text x="50" y="250">F</text>
+
+    <circle id="G" cx="250" cy="250" r="20" />
+    <text x="250" y="250">G</text>
+
+    <circle id="H" cx="350" cy="300" r="20" />
+    <text x="350" y="300">H</text>
+  </svg>
+
+  <script>
+    const nodeCoords = {
+      A: [200, 50],
+      B: [100, 100],
+      C: [300, 100],
+      D: [150, 180],
+      E: [250, 180],
+      F: [50, 250],
+      G: [250, 250],
+      H: [350, 300]
+    };
+
+    function resetColors() {
+    const allNodes = Object.keys(nodeCoords);
+    allNodes.forEach(id => {
+        const circle = document.getElementById(id);
+        if (circle) circle.setAttribute("class", "");
+    });
+    document.querySelectorAll(".path-line").forEach(line => line.remove());
+    }
+
+    async function encontrarRuta() {
+    resetColors();
+
+    const start = document.getElementById("start").value;
+    const end = document.getElementById("end").value;
+    const checkboxes = document.querySelectorAll("input[type=checkbox]:checked");
+    const blocked = Array.from(checkboxes).map(cb => cb.value);
+
+    const res = await fetch("/find_path", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ start, end, blocked })
+    });
+    const data = await res.json();
+
+    const resultado = document.getElementById("resultado");
+    const rutaTexto = `Ruta: ${data.path.join(" -> ")}`;
+    resultado.innerText =
+        `${rutaTexto}\nInicio: ${data.start}\nFin: ${data.end}\nBloqueados: ${data.blocked.join(", ")}`;
+
+    // Mostrar mensaje de error si ruta incompleta
+    // Considero que si la ruta no empieza con start o no termina con end, o está vacía, está incompleta
+    let mensajeError = document.getElementById("mensaje-error");
+    if (!mensajeError) {
+        mensajeError = document.createElement("span");
+        mensajeError.id = "mensaje-error";
+        mensajeError.style.color = "red";
+        mensajeError.style.marginLeft = "10px";
+        resultado.parentNode.insertBefore(mensajeError, resultado.nextSibling);
+    }
+
+    if (
+        data.path.length === 0 ||
+        data.path[0] !== start ||
+        data.path[data.path.length - 1] !== end
+    ) {
+        mensajeError.textContent = "No hay ruta válida! Compra un Helicóptero";
+    } else {
+        mensajeError.textContent = "";
+    }
+
+    document.getElementById(data.start).setAttribute("class", "start");
+    document.getElementById(data.end).setAttribute("class", "end");
+    data.blocked.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.setAttribute("class", "blocked");
+    });
+
+    for (let i = 0; i < data.path.length - 1; i++) {
+        const [x1, y1] = nodeCoords[data.path[i]];
+        const [x2, y2] = nodeCoords[data.path[i + 1]];
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", x1);
+        line.setAttribute("y1", y1);
+        line.setAttribute("x2", x2);
+        line.setAttribute("y2", y2);
+        line.setAttribute("class", "path-line");
+        document.getElementById("mapa").insertBefore(line, document.getElementById("A"));
+    }
+    }
+
+    function actualizarBloqueos() {
+        const start = document.getElementById("start").value;
+        const end = document.getElementById("end").value;
+
+        Object.keys(nodeCoords).forEach(node => {
+        const checkbox = document.getElementById(`chk_${node}`);
+
+        if (node === start || node === end) {
+            checkbox.checked = false;
+            checkbox.disabled = true;
+        } else {
+            checkbox.disabled = false;
+        }
+        });
+    }
+
+    document.getElementById("start").addEventListener("change", actualizarBloqueos);
+    document.getElementById("end").addEventListener("change", actualizarBloqueos);
+
+    actualizarBloqueos(); 
+  </script>
+</body>
+</html>
