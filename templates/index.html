@@ -97,6 +97,12 @@
     cursor: not-allowed;
     }
 
+    .distance-label {
+        font-size: 12px;
+        font-weight: normal;
+        fill: #333;
+    }
+
   </style>
 </head>
 <body>
@@ -126,18 +132,33 @@
 
   <svg width="400" height="350" id="mapa">
     <!-- Líneas de conexión (fijas) -->
+
     <line x1="200" y1="50" x2="100" y2="100" class="connection-line"/>
+    <text x="150" y="70" class="distance-label">5km</text>
     <line x1="200" y1="50" x2="300" y2="100" class="connection-line"/>
+    <text x="250" y="70" class="distance-label">6km</text>
     <line x1="100" y1="100" x2="150" y2="180" class="connection-line"/>
+    <text x="125" y="140" class="distance-label">4km</text>
     <line x1="300" y1="100" x2="150" y2="180" class="connection-line"/>
+    <text x="225" y="140" class="distance-label">7km</text>
+    <line x1="300" y1="100" x2="150" y2="180" class="connection-line"/>
+    <text x="275" y="140" class="distance-label">4km</text>
     <line x1="300" y1="100" x2="250" y2="180" class="connection-line"/>
+    <text x="275" y="140" class="distance-label">4km</text>
     <line x1="150" y1="180" x2="250" y2="180" class="connection-line"/>
+    <text x="200" y="170" class="distance-label">3.5 km</text>
     <line x1="100" y1="100" x2="50" y2="250" class="connection-line"/> 
+    <text x="75" y="175" class="distance-label">8km</text>
     <line x1="50" y1="250" x2="250" y2="250" class="connection-line"/> 
+    <text x="150" y="240" class="distance-label">10km</text>
     <line x1="250" y1="180" x2="250" y2="250" class="connection-line"/> 
+    <text x="255" y="215" class="distance-label">2.5km</text>
     <line x1="250" y1="250" x2="350" y2="300" class="connection-line"/> 
+    <text x="300" y="275" class="distance-label">5km</text>
     <line x1="150" y1="180" x2="50" y2="250" class="connection-line"/>
+    <text x="100" y="215" class="distance-label">5km</text>
     <line x1="300" y1="100" x2="350" y2="300" class="connection-line"/>
+    <text x="325" y="200" class="distance-label">10km</text>
 
     <!-- Nodos -->
     <circle id="A" cx="200" cy="50" r="20" />
