@@ -16,13 +16,16 @@ def find_path():
     end = data['end']
     blocked = data.get('blocked', [])
 
-    path = genetic_algorithm(start, end, blocked)
+    path, details = genetic_algorithm(start, end, blocked)
+
     return jsonify({
         'path': path,
         'start': start,
         'end': end,
-        'blocked': blocked
+        'blocked': blocked,
+        'metrics': details
     })
+
 
 if __name__ == '__main__':
     app.run(debug=True)
